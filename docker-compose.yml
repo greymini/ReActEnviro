@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-AIzaSyB5lbRkvLZzB9kNztlw6LpEXrwKG_Xa0G8}
+    volumes:
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --reload
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_WS_URL=ws://localhost:8000/agent/ws
+    depends_on:
+      - backend 

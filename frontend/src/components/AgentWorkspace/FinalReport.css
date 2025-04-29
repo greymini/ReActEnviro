@@ -1,0 +1,220 @@
+.final-report {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-width: 90%;
+    max-height: 90vh;
+    width: 1100px;
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.report-header {
+    background-color: #1a3b5d;
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.report-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.close-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.report-content {
+    padding: 16px 24px 24px;
+    overflow-y: auto;
+    flex: 1;
+    color: #333;
+}
+
+.goal-section {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.goal-section h3 {
+    color: #1a3b5d;
+    margin: 0 0 8px 0;
+    font-size: 1.2rem;
+}
+
+.goal-section p {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.report-date {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 8px;
+}
+
+.report-body {
+    margin-bottom: 24px;
+}
+
+.report-section {
+    margin-bottom: 24px;
+}
+
+.report-section h2 {
+    color: #1a3b5d;
+    font-size: 1.3rem;
+    margin: 16px 0 8px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.report-section h3 {
+    color: #2c5282;
+    font-size: 1.1rem;
+    margin: 16px 0 8px 0;
+}
+
+.report-section p {
+    margin: 8px 0;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.report-section ul, .report-section ol {
+    margin: 8px 0;
+    padding-left: 24px;
+}
+
+.report-section li {
+    margin-bottom: 4px;
+    line-height: 1.6;
+}
+
+.tool-results-section {
+    margin-top: 32px;
+}
+
+.tool-results-section h2 {
+    color: #1a3b5d;
+    font-size: 1.3rem;
+    margin: 0 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.tool-category {
+    margin-bottom: 24px;
+}
+
+.tool-category h3 {
+    color: #2c5282;
+    font-size: 1.1rem;
+    margin: 16px 0 8px 0;
+}
+
+.tool-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.tool-result-card {
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.tool-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.tool-result-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #2c5282;
+}
+
+.tool-timestamp {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.tool-params h5, .tool-result-summary h5 {
+    margin: 8px 0 4px 0;
+    font-size: 0.9rem;
+    color: #4a5568;
+}
+
+.tool-params ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tool-params li {
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.param-name {
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.param-value {
+    word-break: break-word;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.85rem;
+}
+
+.tool-result-summary p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+.no-report {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    font-size: 1.1rem;
+    color: #666;
+    font-style: italic;
+} 
