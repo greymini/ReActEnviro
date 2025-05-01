@@ -1,6 +1,6 @@
 # ReActEnviro - Environmental Impact Assessment AI Agent
 
-(https://github.com/greymini/ReActEnviro/blob/a82ababa4520d7396b095b08c6731f95361c863e/EnviroReact%20Landing%20Page.png)
+![ReActEnviro Overview](https://raw.githubusercontent.com/greymini/ReActEnviro/main/EnviroReact%20Landing%20Page.png)
 
 ## Overview
 
