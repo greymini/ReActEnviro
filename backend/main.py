@@ -17,6 +17,9 @@ from app.tools.specialized.environmental_assessment import (
 import os
 import logging
 from dotenv import load_dotenv
+from prometheus_client import make_asgi_app
+import time
+from app.metrics import http_requests_total, request_duration
 
 # Set up logging
 logging.basicConfig(
@@ -31,6 +34,26 @@ load_dotenv()
 # Initialize FastAPI app
 app = FastAPI(title="Environmental Impact Assessment ReAct Agent")
 
+# Add Prometheus metrics endpoint
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
+
+# Middleware to track request duration
+@app.middleware("http")
+async def track_requests(request, call_next):
+    method = request.method
+    path = request.url.path
+    
+    start_time = time.time()
+    response = await call_next(request)
+    duration = time.time() - start_time
+    
+    status = response.status_code
+    http_requests_total.labels(method=method, endpoint=path, status=status).inc()
+    request_duration.labels(method=method, endpoint=path).observe(duration)
+    
+    return response
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -38,6 +61,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Add routes
@@ -45,21 +69,10 @@ app.include_router(router)
 
 # Initialize services and agent
 def initialize_agent():
-    # Get Gemini API key
-    gemini_api_key = os.getenv("GEMINI_API_KEY")
-    
-    if not gemini_api_key:
-        logger.warning("GEMINI_API_KEY not found in environment. Using default key for development only.")
-        # Fallback key for development - should be replaced in production
-        gemini_api_key = "AIzaSyBvbXoT4gnSSv1anWXtOZx4z0mmOcTjvlQ"
-    
     try:
         logger.info("Initializing LLM service")
-        # Create LLM service
-        llm_service = LLMService(
-            api_key=gemini_api_key,
-            model="gemini-1.5-pro"
-        )
+        # Create LLM service using environment variables
+        llm_service = LLMService()
         
         logger.info("Setting up tool registry")
         # Create tool registry and register tools
@@ -104,6 +117,11 @@ async def startup_event():
         # We can't raise an exception here as it would prevent the app from starting
         # but we log it so it's visible
 
+# Get server configuration from environment
+host = os.getenv("HOST", "0.0.0.0")
+port = int(os.getenv("PORT", "8000"))
+debug = os.getenv("DEBUG", "true").lower() == "true"
+
 # Run the app if executed directly
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
+    uvicorn.run("main:app", host=host, port=port, reload=debug) 

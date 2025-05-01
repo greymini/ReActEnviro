@@ -1,10 +1,45 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './AgentWorkspace.css';
 import GoalProgress from './GoalProgress';
 import ToolExecutionPanel from './ToolExecutionPanel';
 import ReasoningVisualizer from './ReasoningVisualizer';
 import FinalReport from './FinalReport';
 import { connectWebSocket, sendWebSocketCommand } from '../../services/websocket';
+
+// Add a new UserInputModal component
+function UserInputModal({ request, onSubmit, onCancel }) {
+  const [inputValue, setInputValue] = useState('');
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(inputValue);
+  };
+  
+  return (
+    <div className="user-input-modal">
+      <div className="user-input-modal-content">
+        <h3>Agent Request</h3>
+        <p>{request.prompt}</p>
+        <form onSubmit={handleSubmit}>
+          <textarea 
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Enter your response..."
+            rows={5}
+          />
+          <div className="user-input-actions">
+            <button type="button" onClick={onCancel} className="cancel-button">
+              Cancel
+            </button>
+            <button type="submit" className="submit-button">
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 const AgentWorkspace = ({ initialContext = {} }) => {
     const [state, setState] = useState({
@@ -22,6 +57,23 @@ const AgentWorkspace = ({ initialContext = {} }) => {
     const wsRef = useRef(null);
     const reasoningContainerRef = useRef(null);
     
+    const [userInputRequest, setUserInputRequest] = useState(null);
+    
+    // Debug function to test WebSocket connection
+    const testWebSocketConnection = () => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            console.log("Testing WebSocket connection with ping");
+            sendWebSocketCommand(wsRef.current, { type: 'ping' });
+        } else {
+            console.error("WebSocket is not open for testing");
+            setState(prev => ({
+                ...prev,
+                error: 'WebSocket connection is not available. Status: ' + 
+                       (wsRef.current ? ['Connecting', 'Open', 'Closing', 'Closed'][wsRef.current.readyState] : 'Not initialized')
+            }));
+        }
+    };
+    
     // Format timestamp to readable time
     const formatTime = (timestamp) => {
         if (!timestamp) return '';
@@ -35,11 +87,126 @@ const AgentWorkspace = ({ initialContext = {} }) => {
     };
     
     // Handle WebSocket message
-    const handleWebSocketMessage = (data) => {
-        if (data && data.event_type) {
-            handleAgentUpdate(data);
+    const handleWebSocketMessage = useCallback((data) => {
+        console.log('Handling WebSocket message in AgentWorkspace:', data);
+        
+        // Check if this is a connection status message
+        if (data.type === 'connection_status') {
+            setConnectionStatus(data.status);
+            return;
         }
-    };
+        
+        // Handle the event coming from the backend
+        if (data && data.event_type) {
+            // Handle agent state updates inline
+            const event = data;
+            const { event_type, data: eventData } = event;
+            
+            console.log(`Handling event: ${event_type}`, eventData);
+            
+            switch (event_type) {
+                case 'goal_set':
+                    setState(prev => ({
+                        ...prev,
+                        goals: [...prev.goals, eventData.goal]
+                    }));
+                    break;
+                    
+                case 'thought_added':
+                    setState(prev => ({
+                        ...prev,
+                        thoughts: [...prev.thoughts, eventData.thought]
+                    }));
+                    // Auto-scroll to the latest thought
+                    setTimeout(() => {
+                        if (reasoningContainerRef.current) {
+                            reasoningContainerRef.current.scrollTop = reasoningContainerRef.current.scrollHeight;
+                        }
+                    }, 100);
+                    break;
+                    
+                case 'tool_started':
+                    const newToolCall = eventData.tool_call;
+                    setState(prev => ({
+                        ...prev,
+                        toolCalls: [...prev.toolCalls, newToolCall]
+                    }));
+                    break;
+                    
+                case 'tool_completed':
+                    setState(prev => ({
+                        ...prev,
+                        toolCalls: prev.toolCalls.map(tc => 
+                            tc.id === eventData.tool_call_id 
+                                ? { ...tc, outputs: eventData.outputs, end_time: Date.now() / 1000 }
+                                : tc
+                        )
+                    }));
+                    break;
+                    
+                case 'tool_failed':
+                    setState(prev => ({
+                        ...prev,
+                        toolCalls: prev.toolCalls.map(tc => 
+                            tc.id === eventData.tool_call_id 
+                                ? { ...tc, error: eventData.error, end_time: Date.now() / 1000 }
+                                : tc
+                        )
+                    }));
+                    break;
+                    
+                case 'status_changed':
+                    setLoading(eventData.status === 'thinking' || eventData.status === 'executing-tool');
+                    setState(prev => ({
+                        ...prev,
+                        status: eventData.status
+                    }));
+                    
+                    // When the agent completes, show the final report
+                    if (eventData.status === 'completed') {
+                        setShowFinalReport(true);
+                    }
+                    break;
+                    
+                case 'error':
+                    setState(prev => ({
+                        ...prev,
+                        error: eventData.error
+                    }));
+                    break;
+                    
+                case 'goal_completed':
+                    setState(prev => ({
+                        ...prev,
+                        goals: prev.goals.map(g => 
+                            g.id === eventData.goal_id 
+                                ? { ...g, completed: true }
+                                : g
+                        )
+                    }));
+                    break;
+                    
+                case 'state_reset':
+                    setState({
+                        goals: [],
+                        thoughts: [],
+                        toolCalls: [],
+                        status: 'idle',
+                        error: null
+                    });
+                    setGoal('');
+                    setShowFinalReport(false);
+                    break;
+                    
+                case 'user_input_request':
+                    setUserInputRequest(eventData.request);
+                    break;
+                    
+                default:
+                    console.log(`Unknown event type: ${event_type}`);
+            }
+        }
+    }, []);
     
     // Connect to WebSocket on component mount
     useEffect(() => {
@@ -83,112 +250,7 @@ const AgentWorkspace = ({ initialContext = {} }) => {
                 error: 'Failed to connect to server. Please refresh the page and try again.'
             }));
         }
-    }, []);
-    
-    // Handle agent state updates from WebSocket
-    const handleAgentUpdate = (event) => {
-        const { event_type, data } = event;
-        
-        console.log(`Handling event: ${event_type}`, data);
-        
-        switch (event_type) {
-            case 'goal_set':
-                setState(prev => ({
-                    ...prev,
-                    goals: [...prev.goals, data.goal]
-                }));
-                break;
-                
-            case 'thought_added':
-                setState(prev => ({
-                    ...prev,
-                    thoughts: [...prev.thoughts, data.thought]
-                }));
-                // Auto-scroll to the latest thought
-                setTimeout(() => {
-                    if (reasoningContainerRef.current) {
-                        reasoningContainerRef.current.scrollTop = reasoningContainerRef.current.scrollHeight;
-                    }
-                }, 100);
-                break;
-                
-            case 'tool_started':
-                const newToolCall = data.tool_call;
-                setState(prev => ({
-                    ...prev,
-                    toolCalls: [...prev.toolCalls, newToolCall]
-                }));
-                break;
-                
-            case 'tool_completed':
-                setState(prev => ({
-                    ...prev,
-                    toolCalls: prev.toolCalls.map(tc => 
-                        tc.id === data.tool_call_id 
-                            ? { ...tc, outputs: data.outputs, end_time: Date.now() / 1000 }
-                            : tc
-                    )
-                }));
-                break;
-                
-            case 'tool_failed':
-                setState(prev => ({
-                    ...prev,
-                    toolCalls: prev.toolCalls.map(tc => 
-                        tc.id === data.tool_call_id 
-                            ? { ...tc, error: data.error, end_time: Date.now() / 1000 }
-                            : tc
-                    )
-                }));
-                break;
-                
-            case 'status_changed':
-                setLoading(data.status === 'thinking' || data.status === 'executing-tool');
-                setState(prev => ({
-                    ...prev,
-                    status: data.status
-                }));
-                
-                // When the agent completes, show the final report
-                if (data.status === 'completed') {
-                    setShowFinalReport(true);
-                }
-                break;
-                
-            case 'error':
-                setState(prev => ({
-                    ...prev,
-                    error: data.error
-                }));
-                break;
-                
-            case 'goal_completed':
-                setState(prev => ({
-                    ...prev,
-                    goals: prev.goals.map(g => 
-                        g.id === data.goal_id 
-                            ? { ...g, completed: true }
-                            : g
-                    )
-                }));
-                break;
-                
-            case 'state_reset':
-                setState({
-                    goals: [],
-                    thoughts: [],
-                    toolCalls: [],
-                    status: 'idle',
-                    error: null
-                });
-                setGoal('');
-                setShowFinalReport(false);
-                break;
-                
-            default:
-                console.log(`Unknown event type: ${event_type}`);
-        }
-    };
+    }, [handleWebSocketMessage]);
     
     // Toggle final report visibility
     const toggleFinalReport = () => {
@@ -384,6 +446,26 @@ const AgentWorkspace = ({ initialContext = {} }) => {
             .join(' ');
     };
     
+    // Add handler for user input
+    const handleUserInputSubmit = (inputValue) => {
+        if (userInputRequest && wsRef.current) {
+            sendWebSocketCommand(wsRef.current, {
+                type: 'user_input',
+                requestId: userInputRequest.id,
+                data: inputValue
+            });
+            setUserInputRequest(null);
+        }
+    };
+    
+    const handleUserInputCancel = () => {
+        // Send stop signal to the agent
+        if (wsRef.current) {
+            sendWebSocketCommand(wsRef.current, { type: 'stop' });
+        }
+        setUserInputRequest(null);
+    };
+    
     return (
         <div className="agent-workspace">
             <header className="workspace-header">
@@ -449,6 +531,15 @@ const AgentWorkspace = ({ initialContext = {} }) => {
                                 {showFinalReport ? 'Hide Report' : 'View Final Report'}
                             </button>
                         )}
+                        
+                        {/* Add debug button for testing */}
+                        <button 
+                            className="debug-button"
+                            onClick={testWebSocketConnection}
+                            style={{ marginLeft: '10px', backgroundColor: '#333', color: 'white', padding: '5px 10px' }}
+                        >
+                            Test Connection
+                        </button>
                     </div>
                     {state.error && (
                         <div className="error-message">
@@ -481,6 +572,14 @@ const AgentWorkspace = ({ initialContext = {} }) => {
                     <ToolExecutionPanel toolCalls={state.toolCalls} />
                 </div>
             </div>
+            
+            {userInputRequest && (
+                <UserInputModal
+                    request={userInputRequest}
+                    onSubmit={handleUserInputSubmit}
+                    onCancel={handleUserInputCancel}
+                />
+            )}
         </div>
     );
 };

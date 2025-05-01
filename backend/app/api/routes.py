@@ -5,6 +5,11 @@ from pydantic import BaseModel
 from app.agent.react_agent import ReActAgent
 import json
 import asyncio
+from app.api.websocket import agent_websocket_endpoint, handle_websocket_connection
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # Model for the start agent request
 class StartAgentRequest(BaseModel):
@@ -71,9 +76,15 @@ async def reset_agent():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# WebSocket endpoint
+# WebSocket endpoints (using both paths for compatibility)
 @router.websocket("/agent/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint_1(websocket: WebSocket):
     """WebSocket endpoint for real-time updates"""
-    from app.api.websocket import handle_websocket_connection
-    await handle_websocket_connection(websocket) 
+    logger.info("Connection attempt to /agent/ws")
+    await handle_websocket_connection(websocket)
+
+@router.websocket("/ws/agent")
+async def websocket_endpoint_2(websocket: WebSocket):
+    """Alternative WebSocket endpoint for real-time updates"""
+    logger.info("Connection attempt to /ws/agent")
+    await agent_websocket_endpoint(websocket) 
