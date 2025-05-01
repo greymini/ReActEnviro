@@ -1,6 +1,6 @@
 # ReActEnviro - Environmental Impact Assessment AI Agent
 
-![React Agent Reasoning Process](docs/images/eia_agent_screenshot.png)
+
 
 ## Overview
 
