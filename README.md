@@ -3,7 +3,7 @@
 ![ReActEnviro Overview](https://raw.githubusercontent.com/greymini/ReActEnviro/main/EnviroReact%20Landing%20Page.png)
 
 Demo Video:
-https://github.com/greymini/ReActEnviro/issues/1
+![https://github.com/greymini/ReActEnviro/issues/1]
 
 ## Overview
 
