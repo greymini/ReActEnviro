@@ -2,7 +2,7 @@
   "name": "environmental-impact-assessment-agent-frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://yourusername.github.io/react",
+  "homepage": "https://greymini.github.io/ReActEnviro",
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
