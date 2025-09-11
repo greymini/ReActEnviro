@@ -4,8 +4,8 @@
  * @returns {WebSocket} The WebSocket connection
  */
 export const connectWebSocket = (onMessageCallback) => {
-    // Always use localhost:8000 to connect to the backend, regardless of which port the frontend is on
-    const wsUrl = 'ws://localhost:8000/ws/agent';
+    // Use environment variable or fallback to localhost for development
+    const wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws/agent';
     console.log(`Connecting to WebSocket at ${wsUrl}`);
     
     let reconnectAttempts = 0;

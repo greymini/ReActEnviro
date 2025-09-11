@@ -2,6 +2,12 @@
 
 ![React Agent Reasoning Process](docs/images/eia_agent_screenshot.png)
 
+## Demo Video
+
+https://github.com/greymini/ReActEnviro/assets/YOUR_GITHUB_USER_ID/VIDEO_ASSET_ID
+
+*Watch a complete demonstration of the Environmental Impact Assessment AI Agent in action*
+
 ## Overview
 
 ReActEnviro is an advanced AI agent system designed to conduct comprehensive environmental impact assessments for proposed construction projects. The system leverages the ReAct (Reasoning and Acting) framework to provide thorough, transparent, and explainable environmental analyses in real-time.
@@ -83,6 +89,14 @@ The application follows a client-server architecture:
    ```
 
 3. Navigate to `http://localhost:3000` in your browser
+
+## Deployment
+
+For deployment instructions to GitHub Pages (frontend) and Railway (backend), see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+**Quick Deploy:**
+- Frontend: Deployed automatically via GitHub Actions to GitHub Pages
+- Backend: Deploy to Railway with one click from GitHub
 
 ## Usage
 

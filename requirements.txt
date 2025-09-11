@@ -1,0 +1,6 @@
+# Root requirements.txt for Railway deployment
+# This file tells Railway this is a Python project
+# The actual dependencies are in backend/requirements.txt
+
+# Install dependencies from backend directory
+-r backend/requirements.txt
