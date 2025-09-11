@@ -1,6 +1,9 @@
 # ReActEnviro - Environmental Impact Assessment AI Agent
 
-![React Agent Reasoning Process](docs/images/eia_agent_screenshot.png)
+![ReActEnviro Overview](https://raw.githubusercontent.com/greymini/ReActEnviro/main/EnviroReact%20Landing%20Page.png)
+
+# Demo Video:
+https://github.com/greymini/ReActEnviro/issues/1
 
 ## Demo Video
 
@@ -118,9 +121,6 @@ For deployment instructions to GitHub Pages (frontend) and Railway (backend), se
 - User authentication and project management
 - Additional monitoring and performance metrics
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 
